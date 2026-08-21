@@ -19,8 +19,8 @@ public class AccountController {
     }
 
     @GetMapping
-    public HashMap<String, Account> getAllAccounts() {
-        return accountStorageService.loadAccounts();
+    public ResponseEntity<HashMap<String, Account>> getAllAccounts() {
+        return ResponseEntity.ok(accountStorageService.loadAccounts());
     }
 
     @PostMapping
