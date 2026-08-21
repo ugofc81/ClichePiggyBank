@@ -5,7 +5,9 @@ import com.example.clichepiggybank.service.UserStorageService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @RestController
@@ -18,13 +20,16 @@ public class UserController {
     }
 
     @GetMapping
-    public HashMap<String, User> getAllUsers() {
-        return userStorageService.loadUsers();
+    public ResponseEntity<HashMap<String, User>> getAllUsers() {
+        return ResponseEntity.ok(userStorageService.loadUsers());
     }
 
     @PostMapping
-    public User createUser(@RequestBody User newUser) {
+    public ResponseEntity<User> createUser(@RequestBody User newUser, @RequestParam("inquirerid") String inquirerId) {
         HashMap<String, User> current = userStorageService.loadUsers();
+        if (!isAdmin(current, inquirerId)) {
+            return ResponseEntity.badRequest().build();
+        }
         String guid = UUID.randomUUID().toString();
         while(current.containsKey(guid)) {
             guid = UUID.randomUUID().toString();
@@ -32,16 +37,22 @@ public class UserController {
         newUser.setId(guid);
         current.put(guid, newUser);
         userStorageService.saveUsers(current);
-        return newUser;
+        return ResponseEntity.ok(newUser);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
-        boolean isDeleted = userStorageService.deleteUserById(id);
-        if (isDeleted) {
-            return ResponseEntity.noContent().build();
+    public ResponseEntity<User> deleteUser(@PathVariable String id, @RequestParam("inquirerid") String inquirerId) {
+        HashMap<String, User> current = userStorageService.loadUsers();
+        if (!isAdmin(current, inquirerId)) {
+            return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.notFound().build();
+        if (!current.containsKey(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        User toBeDeleted = current.get(id);
+        current.remove(id);
+        userStorageService.saveUsers(current);
+        return ResponseEntity.ok(toBeDeleted);
     }
 
     @GetMapping("/{id}")
@@ -51,5 +62,20 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(users.get(id));
+    }
+
+    private boolean isAdmin(HashMap<String, User> current, String inquirerId) {
+        User inquirer;
+        try {
+            inquirer = current
+                    .values()
+                    .stream()
+                    .filter(user -> user.getId().equals(inquirerId))
+                    .findFirst()
+                    .orElseThrow();
+        } catch (NoSuchElementException e) {
+            return false;
+        }
+        return Arrays.asList(inquirer.getRoles()).contains("admin");
     }
 }

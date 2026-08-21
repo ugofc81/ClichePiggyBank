@@ -57,7 +57,7 @@ public class SanctionController {
         User savedReceiver = userController.getUser(receiver.getId()).getBody();
         newSanction.getReceiver().setName(savedReceiver.getName());
 
-        HashMap<String, Account> accounts = accountController.getAllAccounts();
+        HashMap<String, Account> accounts = accountController.getAllAccounts().getBody();
         Account toBeCharged = accounts.values().stream().filter(account -> account.getOwnerId().equals(receiver.getId())).findFirst().orElse(null);
         if (toBeCharged == null) {
             toBeCharged = accountController.createAccount(receiver).getBody();

@@ -60,14 +60,4 @@ public class UserStorageService {
             }
         }
     }
-
-    public synchronized boolean deleteUserById(String id) {
-        HashMap<String, User> currentUsers = loadUsers();
-        if (!currentUsers.containsKey(id)) {
-            return false;
-        }
-        currentUsers.remove(id);
-        saveUsers(currentUsers);
-        return true;
-    }
 }
