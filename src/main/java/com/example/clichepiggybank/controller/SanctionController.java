@@ -1,7 +1,6 @@
 package com.example.clichepiggybank.controller;
 
 import com.example.clichepiggybank.controller.exceptions.SanctionNotFoundException;
-import com.example.clichepiggybank.controller.exceptions.UserNotFoundException;
 import com.example.clichepiggybank.model.Account;
 import com.example.clichepiggybank.model.Sanction;
 import com.example.clichepiggybank.model.User;
