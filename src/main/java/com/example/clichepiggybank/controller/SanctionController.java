@@ -17,7 +17,7 @@ public class SanctionController {
     private final SanctionStorageService sanctionStorageService;
     private final UserStorageService userStorageService;
     private final AccountStorageService accountStorageService;
-    private final static int AMOUNT_OF_LAST_SANCTIONS = 4;
+    private final static int AMOUNT_OF_LAST_SANCTIONS = 10;
 
     public SanctionController(SanctionStorageService sanctionStorageService, UserStorageService userStorageService, AccountStorageService accountStorageService) {
         this.sanctionStorageService = sanctionStorageService;
@@ -34,7 +34,8 @@ public class SanctionController {
     public ResponseEntity<List<Sanction>> getLastSanctions() {
         List<Sanction> sanctionList = getAllSanctions().getBody();
         Collections.sort(sanctionList, Comparator.comparing(Sanction::getDatetime));
-        return ResponseEntity.ok(sanctionList.subList(sanctionList.size()-AMOUNT_OF_LAST_SANCTIONS, sanctionList.size()));
+        int limit = Math.min(sanctionList.size(), AMOUNT_OF_LAST_SANCTIONS);
+        return ResponseEntity.ok(sanctionList.subList(sanctionList.size()-limit, sanctionList.size()));
     }
 
     @PostMapping
