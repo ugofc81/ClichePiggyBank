@@ -1,5 +1,7 @@
 package com.example.clichepiggybank.controller;
 
+import com.example.clichepiggybank.controller.exceptions.ForbiddenException;
+import com.example.clichepiggybank.controller.exceptions.UserNotFoundException;
 import com.example.clichepiggybank.model.User;
 import com.example.clichepiggybank.service.UserStorageService;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +30,7 @@ public class UserController {
     public ResponseEntity<User> createUser(@RequestBody User newUser, @RequestParam("inquirerid") String inquirerId) {
         HashMap<String, User> current = userStorageService.loadUsers();
         if (!isAdmin(current, inquirerId)) {
-            return ResponseEntity.badRequest().build();
+            throw new ForbiddenException(inquirerId);
         }
         String guid = UUID.randomUUID().toString();
         while(current.containsKey(guid)) {
@@ -44,10 +46,10 @@ public class UserController {
     public ResponseEntity<User> deleteUser(@PathVariable String id, @RequestParam("inquirerid") String inquirerId) {
         HashMap<String, User> current = userStorageService.loadUsers();
         if (!isAdmin(current, inquirerId)) {
-            return ResponseEntity.badRequest().build();
+            throw new ForbiddenException(inquirerId);
         }
         if (!current.containsKey(id)) {
-            return ResponseEntity.notFound().build();
+            throw new UserNotFoundException(id);
         }
         User toBeDeleted = current.get(id);
         current.remove(id);
@@ -59,7 +61,7 @@ public class UserController {
     public ResponseEntity<User> getUser(@PathVariable String id) {
         HashMap<String, User> users = userStorageService.loadUsers();
         if (!users.containsKey(id)) {
-            return ResponseEntity.notFound().build();
+            throw new UserNotFoundException(id);
         }
         return ResponseEntity.ok(users.get(id));
     }

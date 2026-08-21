@@ -1,5 +1,6 @@
 package com.example.clichepiggybank.controller;
 
+import com.example.clichepiggybank.controller.exceptions.AccountNotFoundException;
 import com.example.clichepiggybank.model.Account;
 import com.example.clichepiggybank.model.User;
 import com.example.clichepiggybank.service.AccountStorageService;
@@ -40,7 +41,7 @@ public class AccountController {
     public ResponseEntity<Account> getAccount(@PathVariable String id) {
         HashMap<String, Account> accounts = accountStorageService.loadAccounts();
         if(!accounts.containsKey(id)) {
-            return ResponseEntity.notFound().build();
+            throw new AccountNotFoundException(id);
         }
         return ResponseEntity.ok(accounts.get(id));
     }
@@ -49,7 +50,7 @@ public class AccountController {
     public ResponseEntity<Account> updateAccount(@PathVariable String id, @RequestBody Account updatedAccount) {
         HashMap<String, Account> accounts = accountStorageService.loadAccounts();
         if(!accounts.containsKey(id)) {
-            return ResponseEntity.notFound().build();
+            throw new AccountNotFoundException(id);
         }
         accounts.put(id, updatedAccount);
         accountStorageService.saveAccounts(accounts);
@@ -60,7 +61,7 @@ public class AccountController {
     public ResponseEntity<Account> resetAccount(@PathVariable String id) {
         HashMap<String, Account> accounts = accountStorageService.loadAccounts();
         if(!accounts.containsKey(id)) {
-            return ResponseEntity.notFound().build();
+            throw new AccountNotFoundException(id);
         }
         Account current = accounts.get(id);
         current.setBalance(0);
