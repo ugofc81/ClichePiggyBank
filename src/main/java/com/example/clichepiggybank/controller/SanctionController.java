@@ -1,5 +1,6 @@
 package com.example.clichepiggybank.controller;
 
+import com.example.clichepiggybank.controller.exceptions.SanctionNotFoundException;
 import com.example.clichepiggybank.model.Account;
 import com.example.clichepiggybank.model.Sanction;
 import com.example.clichepiggybank.model.User;
@@ -73,7 +74,7 @@ public class SanctionController {
     public ResponseEntity<Sanction> getSanction(@PathVariable String id) {
         HashMap<String, Sanction> sanctions = sanctionStorageService.loadSanctions();
         if(!sanctions.containsKey(id)) {
-            return ResponseEntity.notFound().build();
+            throw new SanctionNotFoundException(id);
         }
         return ResponseEntity.ok(sanctions.get(id));
     }
