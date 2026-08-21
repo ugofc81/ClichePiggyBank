@@ -1,9 +1,11 @@
 package com.example.clichepiggybank.controller;
 
 import com.example.clichepiggybank.controller.exceptions.AccountNotFoundException;
+import com.example.clichepiggybank.controller.exceptions.ForbiddenException;
 import com.example.clichepiggybank.model.Account;
 import com.example.clichepiggybank.model.User;
 import com.example.clichepiggybank.service.AccountStorageService;
+import com.example.clichepiggybank.service.UserStorageService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,9 +16,14 @@ import java.util.UUID;
 @RequestMapping("/api/accounts")
 public class AccountController {
     private final AccountStorageService accountStorageService;
+    private final UserStorageService userStorageService;
 
-    public AccountController(AccountStorageService accountStorageService) {
+    public AccountController(
+            AccountStorageService accountStorageService,
+            UserStorageService userStorageService
+    ) {
         this.accountStorageService = accountStorageService;
+        this.userStorageService = userStorageService;
     }
 
     @GetMapping
@@ -58,8 +65,12 @@ public class AccountController {
     }
 
     @PutMapping("/reset/{id}")
-    public ResponseEntity<Account> resetAccount(@PathVariable String id) {
+    public ResponseEntity<Account> resetAccount(@PathVariable String id, @RequestParam("inquirerid") String inquirerId) {
         HashMap<String, Account> accounts = accountStorageService.loadAccounts();
+        HashMap<String, User> users = userStorageService.loadUsers();
+        if (!UserController.isAdmin(users, inquirerId)) {
+            throw new ForbiddenException(inquirerId);
+        }
         if(!accounts.containsKey(id)) {
             throw new AccountNotFoundException(id);
         }
