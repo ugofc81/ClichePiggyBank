@@ -51,8 +51,8 @@ public class SanctionController {
 
         User reporter = newSanction.getReporter();
         User receiver = newSanction.getReceiver();
-        UserController userController = new UserController(userStorageService);
-        AccountController accountController = new AccountController(accountStorageService);
+        UserController userController = new UserController(userStorageService, accountStorageService);
+        AccountController accountController = new AccountController(accountStorageService, userStorageService);
         User savedReporter = userController.getUser(reporter.getId()).getBody();
         newSanction.getReporter().setName(savedReporter.getName());
         User savedReceiver = userController.getUser(receiver.getId()).getBody();

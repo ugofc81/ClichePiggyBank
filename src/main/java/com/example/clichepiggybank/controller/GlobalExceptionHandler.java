@@ -60,4 +60,14 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
+
+    @ExceptionHandler(AccountNotEmptyException.class)
+    public ResponseEntity<Map<String, Object>> handleAccountNotEmpty(AccountNotEmptyException ex) {
+        Map<String, Object> body = Map.of(
+                "status", HttpStatus.NOT_FOUND.value(),
+                "error", "Not Found",
+                "message", ex.getMessage()
+        );
+        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+    }
 }
