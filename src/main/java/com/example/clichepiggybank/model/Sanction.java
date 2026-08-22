@@ -1,22 +1,25 @@
 package com.example.clichepiggybank.model;
 
 import java.util.Date;
+import java.util.Set;
 
 public class Sanction {
     private String id;
     private User reporter;
     private User receiver;
-    private double amount;
+    private SanctionAmount amount;
     private String reason;
     private Date datetime;
+    private Set<String> likedBy;
 
-    public Sanction(String id, User reporter, User receiver, double amount, String reason, Date datetime) {
+    public Sanction(String id, User reporter, User receiver, SanctionAmount amount, String reason, Date datetime, Set<String> likedBy) {
         this.id = id;
         this.reporter = reporter;
         this.receiver = receiver;
         this.amount = amount;
         this.reason = reason;
         this.datetime = datetime;
+        this.likedBy = likedBy;
     }
 
     public String getId() {
@@ -43,11 +46,11 @@ public class Sanction {
         this.receiver = receiver;
     }
 
-    public double getAmount() {
+    public SanctionAmount getAmount() {
         return amount;
     }
 
-    public void setAmount(double amount) {
+    public void setAmount(SanctionAmount amount) {
         this.amount = amount;
     }
 
@@ -65,5 +68,13 @@ public class Sanction {
 
     public void setDatetime(Date datetime) {
         this.datetime = datetime;
+    }
+
+    public Set<String> getLikedBy() {
+        return likedBy;
+    }
+
+    public void setLikedBy(Set<String> likedBy) {
+        this.likedBy = likedBy;
     }
 }

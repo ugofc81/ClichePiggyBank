@@ -57,13 +57,14 @@ public class SanctionController {
         newSanction.getReporter().setName(savedReporter.getName());
         User savedReceiver = userController.getUser(receiver.getId()).getBody();
         newSanction.getReceiver().setName(savedReceiver.getName());
+        newSanction.setLikedBy(Collections.emptySet());
 
         HashMap<String, Account> accounts = accountController.getAllAccounts().getBody();
         Account toBeCharged = accounts.values().stream().filter(account -> account.getOwnerId().equals(receiver.getId())).findFirst().orElse(null);
         if (toBeCharged == null) {
             toBeCharged = accountController.createAccount(receiver).getBody();
         }
-        toBeCharged.setBalance(toBeCharged.getBalance() + newSanction.getAmount());
+        toBeCharged.setBalance(toBeCharged.getBalance() + newSanction.getAmount().amount());
         accountController.updateAccount(toBeCharged.getId(), toBeCharged);
         current.put(guid, newSanction);
         sanctionStorageService.saveSanctions(current);
@@ -77,5 +78,18 @@ public class SanctionController {
             throw new SanctionNotFoundException(id);
         }
         return ResponseEntity.ok(sanctions.get(id));
+    }
+
+    @PutMapping("/{id}/like")
+    public ResponseEntity<Sanction> likeSanction(@PathVariable String id, @RequestParam("inquirerid") String inquirerId) {
+        HashMap<String, Sanction> sanctions = sanctionStorageService.loadSanctions();
+        if(!sanctions.containsKey(id)) {
+            throw new SanctionNotFoundException(id);
+        }
+        Sanction sanction = sanctions.get(id);
+        sanction.getLikedBy().add(inquirerId);
+        sanctions.put(id, sanction);
+        sanctionStorageService.saveSanctions(sanctions);
+        return ResponseEntity.ok(sanction);
     }
 }
