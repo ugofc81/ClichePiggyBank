@@ -11,8 +11,9 @@ public class Sanction {
     private String reason;
     private Date datetime;
     private Set<String> likedBy;
+    private Integer likes;
 
-    public Sanction(String id, User reporter, User receiver, SanctionAmount amount, String reason, Date datetime, Set<String> likedBy) {
+    public Sanction(String id, User reporter, User receiver, SanctionAmount amount, String reason, Date datetime, Set<String> likedBy, Integer likes) {
         this.id = id;
         this.reporter = reporter;
         this.receiver = receiver;
@@ -20,6 +21,7 @@ public class Sanction {
         this.reason = reason;
         this.datetime = datetime;
         this.likedBy = likedBy;
+        this.likes = likes;
     }
 
     public String getId() {
@@ -76,5 +78,13 @@ public class Sanction {
 
     public void setLikedBy(Set<String> likedBy) {
         this.likedBy = likedBy;
+    }
+
+    public Integer getLikes() {
+        return likes;
+    }
+
+    public void setLikes(Integer likes) {
+        this.likes = likes;
     }
 }

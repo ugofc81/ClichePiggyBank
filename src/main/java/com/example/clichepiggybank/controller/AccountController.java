@@ -64,7 +64,7 @@ public class AccountController {
         return ResponseEntity.ok(updatedAccount);
     }
 
-    @PutMapping("/reset/{id}")
+    @PutMapping("/{id}/reset")
     public ResponseEntity<Account> resetAccount(@PathVariable String id, @RequestParam("inquirerid") String inquirerId) {
         HashMap<String, Account> accounts = accountStorageService.loadAccounts();
         HashMap<String, User> users = userStorageService.loadUsers();
