@@ -1,5 +1,6 @@
 package com.example.clichepiggybank.controller;
 
+import com.example.clichepiggybank.controller.exceptions.InquirerNotFoundException;
 import com.example.clichepiggybank.controller.exceptions.SanctionNotFoundException;
 import com.example.clichepiggybank.model.Account;
 import com.example.clichepiggybank.model.Sanction;
@@ -34,13 +35,20 @@ public class SanctionController {
     @GetMapping("/latest")
     public ResponseEntity<List<Sanction>> getLastSanctions() {
         List<Sanction> sanctionList = getAllSanctions().getBody();
-        Collections.sort(sanctionList, Comparator.comparing(Sanction::getDatetime));
+        Collections.sort(sanctionList, Comparator.comparing(Sanction::getDatetime).reversed());
         int limit = Math.min(sanctionList.size(), AMOUNT_OF_LAST_SANCTIONS);
-        return ResponseEntity.ok(sanctionList.subList(sanctionList.size()-limit, sanctionList.size()));
+        return ResponseEntity.ok(sanctionList.subList(0, limit));
+    }
+
+    @GetMapping("/best")
+    public ResponseEntity<List<Sanction>> getBestSanctions() {
+        List<Sanction> sanctionList = getAllSanctions().getBody();
+        Collections.sort(sanctionList, Comparator.comparing(Sanction::getLikes).reversed());
+        return ResponseEntity.ok(sanctionList);
     }
 
     @PostMapping
-    public ResponseEntity<Sanction> createSanction(@RequestBody Sanction newSanction) {
+    public ResponseEntity<Sanction> createSanction(@RequestBody Sanction newSanction, @RequestParam("inquirerid") String inquirerId) {
         HashMap<String, Sanction> current = sanctionStorageService.loadSanctions();
         String guid = UUID.randomUUID().toString();
         while(current.containsKey(guid)) {
@@ -49,15 +57,15 @@ public class SanctionController {
         newSanction.setId(guid);
         newSanction.setDatetime(new Date());
 
-        User reporter = newSanction.getReporter();
         User receiver = newSanction.getReceiver();
         UserController userController = new UserController(userStorageService, accountStorageService);
         AccountController accountController = new AccountController(accountStorageService, userStorageService);
-        User savedReporter = userController.getUser(reporter.getId()).getBody();
-        newSanction.getReporter().setName(savedReporter.getName());
+        User reporter = userController.getUser(inquirerId).getBody();
+        newSanction.setReporter(reporter);
         User savedReceiver = userController.getUser(receiver.getId()).getBody();
         newSanction.getReceiver().setName(savedReceiver.getName());
         newSanction.setLikedBy(Collections.emptySet());
+        newSanction.setLikes(0);
 
         HashMap<String, Account> accounts = accountController.getAllAccounts().getBody();
         Account toBeCharged = accounts.values().stream().filter(account -> account.getOwnerId().equals(receiver.getId())).findFirst().orElse(null);
@@ -83,11 +91,17 @@ public class SanctionController {
     @PutMapping("/{id}/like")
     public ResponseEntity<Sanction> likeSanction(@PathVariable String id, @RequestParam("inquirerid") String inquirerId) {
         HashMap<String, Sanction> sanctions = sanctionStorageService.loadSanctions();
+        UserController userController = new UserController(userStorageService, accountStorageService);
+        HashMap <String, User> users = userController.getAllUsers().getBody();
         if(!sanctions.containsKey(id)) {
             throw new SanctionNotFoundException(id);
         }
+        if(!users.containsKey(inquirerId)) {
+            throw new InquirerNotFoundException(id);
+        }
         Sanction sanction = sanctions.get(id);
         sanction.getLikedBy().add(inquirerId);
+        sanction.setLikes(sanction.getLikedBy().size());
         sanctions.put(id, sanction);
         sanctionStorageService.saveSanctions(sanctions);
         return ResponseEntity.ok(sanction);
