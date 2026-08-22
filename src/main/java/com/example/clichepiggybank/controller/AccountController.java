@@ -27,16 +27,16 @@ public class AccountController {
     }
 
     @GetMapping
-    public ResponseEntity<HashMap<String, Account>> getAllAccounts() {
+    public ResponseEntity<HashMap<UUID, Account>> getAllAccounts() {
         return ResponseEntity.ok(accountStorageService.loadAccounts());
     }
 
     @PostMapping
     public ResponseEntity<Account> createAccount(User user) {
-        HashMap<String, Account> current = accountStorageService.loadAccounts();
-        String guid = UUID.randomUUID().toString();
+        HashMap<UUID, Account> current = accountStorageService.loadAccounts();
+        UUID guid = UUID.randomUUID();
         while(current.containsKey(guid)) {
-            guid = UUID.randomUUID().toString();
+            guid = UUID.randomUUID();
         }
         Account newAccount = new Account(guid, user.getId(), 0);
         current.put(guid, newAccount);
@@ -45,8 +45,8 @@ public class AccountController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Account> getAccount(@PathVariable String id) {
-        HashMap<String, Account> accounts = accountStorageService.loadAccounts();
+    public ResponseEntity<Account> getAccount(@PathVariable UUID id) {
+        HashMap<UUID, Account> accounts = accountStorageService.loadAccounts();
         if(!accounts.containsKey(id)) {
             throw new AccountNotFoundException(id);
         }
@@ -54,8 +54,8 @@ public class AccountController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Account> updateAccount(@PathVariable String id, @RequestBody Account updatedAccount) {
-        HashMap<String, Account> accounts = accountStorageService.loadAccounts();
+    public ResponseEntity<Account> updateAccount(@PathVariable UUID id, @RequestBody Account updatedAccount) {
+        HashMap<UUID, Account> accounts = accountStorageService.loadAccounts();
         if(!accounts.containsKey(id)) {
             throw new AccountNotFoundException(id);
         }
@@ -65,9 +65,9 @@ public class AccountController {
     }
 
     @PutMapping("/{id}/reset")
-    public ResponseEntity<Account> resetAccount(@PathVariable String id, @RequestParam("inquirerid") String inquirerId) {
-        HashMap<String, Account> accounts = accountStorageService.loadAccounts();
-        HashMap<String, User> users = userStorageService.loadUsers();
+    public ResponseEntity<Account> resetAccount(@PathVariable UUID id, @RequestParam("inquirerid") UUID inquirerId) {
+        HashMap<UUID, Account> accounts = accountStorageService.loadAccounts();
+        HashMap<UUID, User> users = userStorageService.loadUsers();
         if (!UserController.isAdmin(users, inquirerId)) {
             throw new ForbiddenException(inquirerId);
         }

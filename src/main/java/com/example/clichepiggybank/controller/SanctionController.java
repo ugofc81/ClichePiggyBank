@@ -48,11 +48,11 @@ public class SanctionController {
     }
 
     @PostMapping
-    public ResponseEntity<Sanction> createSanction(@RequestBody Sanction newSanction, @RequestParam("inquirerid") String inquirerId) {
-        HashMap<String, Sanction> current = sanctionStorageService.loadSanctions();
-        String guid = UUID.randomUUID().toString();
+    public ResponseEntity<Sanction> createSanction(@RequestBody Sanction newSanction, @RequestParam("inquirerid") UUID inquirerId) {
+        HashMap<UUID, Sanction> current = sanctionStorageService.loadSanctions();
+        UUID guid = UUID.randomUUID();
         while(current.containsKey(guid)) {
-            guid = UUID.randomUUID().toString();
+            guid = UUID.randomUUID();
         }
         newSanction.setId(guid);
         newSanction.setDatetime(new Date());
@@ -67,7 +67,7 @@ public class SanctionController {
         newSanction.setLikedBy(Collections.emptySet());
         newSanction.setLikes(0);
 
-        HashMap<String, Account> accounts = accountController.getAllAccounts().getBody();
+        HashMap<UUID, Account> accounts = accountController.getAllAccounts().getBody();
         Account toBeCharged = accounts.values().stream().filter(account -> account.getOwnerId().equals(receiver.getId())).findFirst().orElse(null);
         if (toBeCharged == null) {
             toBeCharged = accountController.createAccount(receiver).getBody();
@@ -80,8 +80,8 @@ public class SanctionController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Sanction> getSanction(@PathVariable String id) {
-        HashMap<String, Sanction> sanctions = sanctionStorageService.loadSanctions();
+    public ResponseEntity<Sanction> getSanction(@PathVariable UUID id) {
+        HashMap<UUID, Sanction> sanctions = sanctionStorageService.loadSanctions();
         if(!sanctions.containsKey(id)) {
             throw new SanctionNotFoundException(id);
         }
@@ -89,10 +89,10 @@ public class SanctionController {
     }
 
     @PutMapping("/{id}/like")
-    public ResponseEntity<Sanction> likeSanction(@PathVariable String id, @RequestParam("inquirerid") String inquirerId) {
-        HashMap<String, Sanction> sanctions = sanctionStorageService.loadSanctions();
+    public ResponseEntity<Sanction> likeSanction(@PathVariable UUID id, @RequestParam("inquirerid") UUID inquirerId) {
+        HashMap<UUID, Sanction> sanctions = sanctionStorageService.loadSanctions();
         UserController userController = new UserController(userStorageService, accountStorageService);
-        HashMap <String, User> users = userController.getAllUsers().getBody();
+        HashMap <UUID, User> users = userController.getAllUsers().getBody();
         if(!sanctions.containsKey(id)) {
             throw new SanctionNotFoundException(id);
         }

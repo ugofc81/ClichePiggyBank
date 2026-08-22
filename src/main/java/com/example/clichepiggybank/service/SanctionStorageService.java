@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
+import java.util.UUID;
 
 @Service
 public class SanctionStorageService {
@@ -27,20 +28,20 @@ public class SanctionStorageService {
         this.objectMapper = objectMapper;
     }
 
-    public synchronized HashMap<String, Sanction> loadSanctions() {
+    public synchronized HashMap<UUID, Sanction> loadSanctions() {
         File file = new File(filePath);
         if (!file.exists()) {
             return new HashMap<>();
         }
         try {
-            return objectMapper.readValue(file, new TypeReference<HashMap<String, Sanction>>() {});
+            return objectMapper.readValue(file, new TypeReference<HashMap<UUID, Sanction>>() {});
         } catch (JacksonException e) {
             System.err.println("error reading sanction data file" + e.getMessage());
             return new HashMap<>();
         }
     }
 
-    public synchronized void saveSanctions(HashMap<String, Sanction> sanctionsMap) {
+    public synchronized void saveSanctions(HashMap<UUID, Sanction> sanctionsMap) {
         File tempFile = new File(tempFilePath);
         File finalFile = new File(filePath);
 

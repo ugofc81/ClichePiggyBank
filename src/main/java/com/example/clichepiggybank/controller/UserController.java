@@ -30,19 +30,19 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<HashMap<String, User>> getAllUsers() {
+    public ResponseEntity<HashMap<UUID, User>> getAllUsers() {
         return ResponseEntity.ok(userStorageService.loadUsers());
     }
 
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User newUser, @RequestParam("inquirerid") String inquirerId) {
-        HashMap<String, User> current = userStorageService.loadUsers();
+    public ResponseEntity<User> createUser(@RequestBody User newUser, @RequestParam("inquirerid") UUID inquirerId) {
+        HashMap<UUID, User> current = userStorageService.loadUsers();
         if (!isAdmin(current, inquirerId)) {
             throw new ForbiddenException(inquirerId);
         }
-        String guid = UUID.randomUUID().toString();
+        UUID guid = UUID.randomUUID();
         while(current.containsKey(guid)) {
-            guid = UUID.randomUUID().toString();
+            guid = UUID.randomUUID();
         }
         newUser.setId(guid);
         current.put(guid, newUser);
@@ -51,9 +51,9 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<User> deleteUser(@PathVariable String id, @RequestParam("inquirerid") String inquirerId) {
-        HashMap<String, User> currentUsers = userStorageService.loadUsers();
-        HashMap<String, Account> currentAccounts = accountStorageService.loadAccounts();
+    public ResponseEntity<User> deleteUser(@PathVariable UUID id, @RequestParam("inquirerid") UUID inquirerId) {
+        HashMap<UUID, User> currentUsers = userStorageService.loadUsers();
+        HashMap<UUID, Account> currentAccounts = accountStorageService.loadAccounts();
 
         if (!isAdmin(currentUsers, inquirerId)) {
             throw new ForbiddenException(inquirerId);
@@ -74,15 +74,15 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUser(@PathVariable String id) {
-        HashMap<String, User> users = userStorageService.loadUsers();
+    public ResponseEntity<User> getUser(@PathVariable UUID id) {
+        HashMap<UUID, User> users = userStorageService.loadUsers();
         if (!users.containsKey(id)) {
             throw new UserNotFoundException(id);
         }
         return ResponseEntity.ok(users.get(id));
     }
 
-    public static boolean isAdmin(HashMap<String, User> current, String inquirerId) {
+    public static boolean isAdmin(HashMap<UUID, User> current, UUID inquirerId) {
         User inquirer;
         try {
             inquirer = current

@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
+import java.util.UUID;
 
 @Service
 public class AccountStorageService {
@@ -28,20 +29,20 @@ public class AccountStorageService {
         this.objectMapper = objectMapper;
     }
 
-    public synchronized HashMap<String, Account> loadAccounts() {
+    public synchronized HashMap<UUID, Account> loadAccounts() {
         File file = new File(filePath);
         if (!file.exists()) {
             return new HashMap<>();
         }
         try {
-            return objectMapper.readValue(file, new TypeReference<HashMap<String, Account>>() {});
+            return objectMapper.readValue(file, new TypeReference<HashMap<UUID, Account>>() {});
         } catch (JacksonException e) {
             System.err.println("error reading account data file" + e.getMessage());
             return new HashMap<>();
         }
     }
 
-    public synchronized void saveAccounts(HashMap<String, Account> accountsMap) {
+    public synchronized void saveAccounts(HashMap<UUID, Account> accountsMap) {
         File tempFile = new File(tempFilePath);
         File finalFile = new File(filePath);
 
