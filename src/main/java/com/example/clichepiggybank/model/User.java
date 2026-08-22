@@ -1,21 +1,23 @@
 package com.example.clichepiggybank.model;
 
+import java.util.UUID;
+
 public class User {
-    private String id;
+    private UUID id;
     private String name;
     private String[] roles;
 
-    public User(String id, String name, String[] roles) {
+    public User(UUID id, String name, String[] roles) {
         this.id = id;
         this.name = name;
         this.roles = roles;
     }
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
