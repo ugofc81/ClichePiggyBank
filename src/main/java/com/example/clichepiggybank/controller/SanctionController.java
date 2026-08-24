@@ -47,6 +47,31 @@ public class SanctionController {
         return ResponseEntity.ok(sanctionList);
     }
 
+    @GetMapping("/paginated")
+    public ResponseEntity<List<Sanction>> paginateSanctions(
+            @RequestParam(name = "sort", defaultValue = "datetime") String sort,
+            @RequestParam(name = "order", defaultValue = "desc") String order,
+            @RequestParam(name = "size", defaultValue = "10") Integer size,
+            @RequestParam(name = "page", defaultValue = "1") Integer page) {
+        List<Sanction> sanctionList = getAllSanctions().getBody();
+        Comparator c;
+        switch(sort) {
+            case "likes":
+                c = Comparator.comparing(Sanction::getLikes);
+                break;
+            default:
+                c = Comparator.comparing(Sanction::getDatetime);
+        }
+        switch(order) {
+            case "desc":
+                c = c.reversed();
+                break;
+        }
+        Collections.sort(sanctionList, c);
+        Integer offset = Math.min(Math.max((page-1) * size, 0), sanctionList.size());
+        return ResponseEntity.ok(sanctionList.subList(offset, offset+Math.min(sanctionList.size()-offset, size)));
+    }
+
     @PostMapping
     public ResponseEntity<Sanction> createSanction(@RequestBody Sanction newSanction, @RequestParam("inquirerid") UUID inquirerId) {
         HashMap<UUID, Sanction> current = sanctionStorageService.loadSanctions();
