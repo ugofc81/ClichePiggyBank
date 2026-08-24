@@ -67,8 +67,8 @@ public class SanctionController {
         newSanction.setLikedBy(Collections.emptySet());
         newSanction.setLikes(0);
 
-        HashMap<UUID, Account> accounts = accountController.getAllAccounts().getBody();
-        Account toBeCharged = accounts.values().stream().filter(account -> account.getOwnerId().equals(receiver.getId())).findFirst().orElse(null);
+        List<Account> accounts = accountController.getAllAccounts().getBody();
+        Account toBeCharged = accounts.stream().filter(account -> account.getOwnerId().equals(receiver.getId())).findFirst().orElse(null);
         if (toBeCharged == null) {
             toBeCharged = accountController.createAccount(receiver).getBody();
         }
@@ -92,11 +92,11 @@ public class SanctionController {
     public ResponseEntity<Sanction> likeSanction(@PathVariable UUID id, @RequestParam("inquirerid") UUID inquirerId) {
         HashMap<UUID, Sanction> sanctions = sanctionStorageService.loadSanctions();
         UserController userController = new UserController(userStorageService, accountStorageService);
-        HashMap <UUID, User> users = userController.getAllUsers().getBody();
+        List <User> users = userController.getAllUsers().getBody();
         if(!sanctions.containsKey(id)) {
             throw new SanctionNotFoundException(id);
         }
-        if(!users.containsKey(inquirerId)) {
+        if(users.stream().noneMatch(user -> user.getId().equals(inquirerId))) {
             throw new InquirerNotFoundException(id);
         }
         Sanction sanction = sanctions.get(id);

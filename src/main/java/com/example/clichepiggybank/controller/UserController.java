@@ -10,10 +10,7 @@ import com.example.clichepiggybank.service.UserStorageService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.NoSuchElementException;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/users")
@@ -30,8 +27,8 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<HashMap<UUID, User>> getAllUsers() {
-        return ResponseEntity.ok(userStorageService.loadUsers());
+    public ResponseEntity<List<User>> getAllUsers() {
+        return ResponseEntity.ok(new ArrayList<>(userStorageService.loadUsers().values()));
     }
 
     @PostMapping
