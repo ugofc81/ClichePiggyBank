@@ -9,7 +9,9 @@ import com.example.clichepiggybank.service.UserStorageService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -27,11 +29,10 @@ public class AccountController {
     }
 
     @GetMapping
-    public ResponseEntity<HashMap<UUID, Account>> getAllAccounts() {
-        return ResponseEntity.ok(accountStorageService.loadAccounts());
+    public ResponseEntity<List<Account>> getAllAccounts() {
+        return ResponseEntity.ok(new ArrayList<>(accountStorageService.loadAccounts().values()));
     }
 
-    @PostMapping
     public ResponseEntity<Account> createAccount(User user) {
         HashMap<UUID, Account> current = accountStorageService.loadAccounts();
         UUID guid = UUID.randomUUID();
@@ -53,7 +54,6 @@ public class AccountController {
         return ResponseEntity.ok(accounts.get(id));
     }
 
-    @PutMapping("/{id}")
     public ResponseEntity<Account> updateAccount(@PathVariable UUID id, @RequestBody Account updatedAccount) {
         HashMap<UUID, Account> accounts = accountStorageService.loadAccounts();
         if(!accounts.containsKey(id)) {
