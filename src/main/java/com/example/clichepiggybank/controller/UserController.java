@@ -79,10 +79,10 @@ public class UserController {
         return ResponseEntity.ok(users.get(id));
     }
 
-    public static boolean isAdmin(HashMap<UUID, User> current, UUID inquirerId) {
+    public static boolean isAdmin(HashMap<UUID, User> users, UUID inquirerId) {
         User inquirer;
         try {
-            inquirer = current
+            inquirer = users
                     .values()
                     .stream()
                     .filter(user -> user.getId().equals(inquirerId))
@@ -92,5 +92,20 @@ public class UserController {
             return false;
         }
         return Arrays.asList(inquirer.getRoles()).contains("admin");
+    }
+
+    public static boolean isUser(HashMap<UUID, User> users, UUID inquirerId) {
+        User inquirer;
+        try {
+            inquirer = users
+                    .values()
+                    .stream()
+                    .filter(user -> user.getId().equals(inquirerId))
+                    .findFirst()
+                    .orElseThrow();
+        } catch (NoSuchElementException e) {
+            return false;
+        }
+        return Arrays.asList(inquirer.getRoles()).contains("user");
     }
 }
