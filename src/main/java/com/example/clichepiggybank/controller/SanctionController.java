@@ -16,6 +16,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/sanctions")
+@CrossOrigin(origins = "http://localhost:5173") // Allow your frontend port
 public class SanctionController {
     private final SanctionStorageService sanctionStorageService;
     private final UserStorageService userStorageService;
@@ -160,6 +161,27 @@ public class SanctionController {
         }
         Sanction sanction = sanctions.get(id);
         sanction.getLikedBy().add(inquirerId);
+        sanction.setLikes(sanction.getLikedBy().size());
+        sanctions.put(id, sanction);
+        sanctionStorageService.saveSanctions(sanctions);
+        return ResponseEntity.ok(sanction);
+    }
+
+    @PutMapping("/{id}/unlike")
+    public ResponseEntity<Sanction> unlikeSanction(@PathVariable UUID id, @RequestParam("inquirerid") UUID inquirerId) {
+        HashMap<UUID, Sanction> sanctions = sanctionStorageService.loadSanctions();
+        HashMap <UUID, User> users = userStorageService.loadUsers();
+        if(!sanctions.containsKey(id)) {
+            throw new SanctionNotFoundException(id);
+        }
+        if(!users.containsKey(inquirerId)) {
+            throw new InquirerNotFoundException(inquirerId);
+        }
+        if (!UserController.isUser(users, inquirerId)) {
+            throw new ForbiddenException(inquirerId);
+        }
+        Sanction sanction = sanctions.get(id);
+        sanction.getLikedBy().remove(inquirerId);
         sanction.setLikes(sanction.getLikedBy().size());
         sanctions.put(id, sanction);
         sanctionStorageService.saveSanctions(sanctions);
