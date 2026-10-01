@@ -16,6 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/accounts")
+@CrossOrigin(origins = "http://localhost:5173") // Allow your frontend port
 public class AccountController {
     private final AccountStorageService accountStorageService;
     private final UserStorageService userStorageService;
@@ -62,6 +63,17 @@ public class AccountController {
         accounts.put(id, updatedAccount);
         accountStorageService.saveAccounts(accounts);
         return ResponseEntity.ok(updatedAccount);
+    }
+
+    public ResponseEntity<Account> deleteAccount(@PathVariable UUID id) {
+        HashMap<UUID, Account> accounts = accountStorageService.loadAccounts();
+        if(!accounts.containsKey(id)) {
+            throw new AccountNotFoundException(id);
+        }
+        Account removed = accounts.get(id);
+        accounts.remove(id);
+        accountStorageService.saveAccounts(accounts);
+        return ResponseEntity.ok(removed);
     }
 
     @PutMapping("/{id}/reset")

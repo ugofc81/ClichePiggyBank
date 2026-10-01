@@ -14,6 +14,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/users")
+@CrossOrigin(origins = "http://localhost:5173") // Allow your frontend port
 public class UserController {
     private final UserStorageService userStorageService;
     private final AccountStorageService accountStorageService;
@@ -66,6 +67,8 @@ public class UserController {
         }
         User toBeDeleted = currentUsers.get(id);
         currentUsers.remove(id);
+        AccountController accountController = new AccountController(accountStorageService, userStorageService);
+        accountController.deleteAccount(toBeVerified.getId());
         userStorageService.saveUsers(currentUsers);
         return ResponseEntity.ok(toBeDeleted);
     }
