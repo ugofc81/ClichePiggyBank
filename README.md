@@ -12,8 +12,7 @@ Springboot application. The basic skeleton was built on the following requiremen
 * Develop a digital “Cliche piggy bank” as an MVP
 
 #### Background:
-* A “cliché piggy bank” is, in its standard physical form, a hollow container—often shaped like a pig—into which anyone
-caught using a cliché must drop a fine.
+* A “cliché piggy bank” is, in its standard physical form, a hollow container —often shaped like a pig— into which anyone caught using a cliché must drop a fine.
 * To encourage greater self-discipline among colleagues regarding the use of “empty” phrases —and simply as a bit of shared fun— such a cliché piggy bank was recently introduced.
 * However, it is located in the office, making its use impractical during periods of working from home.
 * To continue penalizing the use of clichés even under these circumstances, a digital solution is therefore needed.
