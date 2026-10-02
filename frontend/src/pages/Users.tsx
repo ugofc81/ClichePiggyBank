@@ -3,7 +3,7 @@ import { usePiggyBank } from '../hooks/usePiggyBank';
 import React, {useState} from "react";
 
 export default function Users() {
-    const { users, loading, error, inquirerId, createUser } = usePiggyBank();
+    const { users, loading, error, inquirerId, createUser, deleteUser } = usePiggyBank();
 
     // Local Form States
     const [name, setName] = useState('');
@@ -150,6 +150,21 @@ export default function Users() {
                                         style={{ padding: '6px 12px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                                     >
                                         Login as {user.name}
+                                    </button>
+                                )}
+
+                                {isCurrent ? (
+                                    <button
+                                        style={{ padding: '6px 12px', backgroundColor: '#bfbfbf', color: '#000000', border: '1px solid #000000', borderRadius: '4px', cursor: 'pointer' }}
+                                    >
+                                        Cannot delete yourself
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => deleteUser && deleteUser(user.id)}
+                                        style={{ padding: '6px 12px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                                    >
+                                        Delete {user.name}
                                     </button>
                                 )}
                             </div>

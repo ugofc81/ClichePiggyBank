@@ -60,15 +60,16 @@ public class UserController {
             throw new UserNotFoundException(id);
         }
         Account toBeVerified = currentAccounts.values().stream().filter(account -> account.getOwnerId().equals(id)).findFirst().orElse(null);
+        AccountController accountController = new AccountController(accountStorageService, userStorageService);
         if (toBeVerified != null) {
             if (toBeVerified.getBalance() > 0) {
                 throw new AccountNotEmptyException(toBeVerified.getId());
+            } else {
+                accountController.deleteAccount(toBeVerified.getId());
             }
         }
         User toBeDeleted = currentUsers.get(id);
         currentUsers.remove(id);
-        AccountController accountController = new AccountController(accountStorageService, userStorageService);
-        accountController.deleteAccount(toBeVerified.getId());
         userStorageService.saveUsers(currentUsers);
         return ResponseEntity.ok(toBeDeleted);
     }
