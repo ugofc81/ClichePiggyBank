@@ -1,12 +1,12 @@
 # Background information
 
-This project is based on a homework I received for a job interview some time ago.
-I kept developing on it as a way to increase my skills and try new things.
+This project is based on a homework I received for a job interview I had in August 2026.
+I continued to develop it in order to learn new skills and experiment.
 
 ## Backend
 Springboot application. The basic skeleton was built on the following requirements:
 
-### Sample Activity: Digital Cliche Piggy Bank
+### Digital Cliche Piggy Bank
 
 #### Objective:
 * Develop a digital “Cliche piggy bank” as an MVP
