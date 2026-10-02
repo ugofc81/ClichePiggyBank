@@ -106,6 +106,20 @@ export function usePiggyBank() {
             throw new Error('Could not create user into the server.');
         }
     };
+
+    const deleteUser = async (userId: string) => {
+        if (!inquirerId) return;
+
+        try {
+            await api.delete(`/users/${userId}`, {
+                params: { inquirerid: inquirerId } // Append the query parameter if your security filter requires it
+            });
+            await fetchData(); // Refresh the list of sanctions instantly on success!
+        } catch (err) {
+            console.error('Failed to delete user:', err);
+            throw new Error('Could not delete user from the server.');
+        }
+    };
     const likeSanction = async (sanctionId: string) => {
         if (!inquirerId) return;
 
@@ -157,5 +171,5 @@ export function usePiggyBank() {
     // Find the full User object corresponding to the URL ID if it exists
     const currentUser = users.find(u => u.id === inquirerId) || null;
 
-    return { users, sanctions, accounts, loading, error, currentUser, inquirerId, likeSanction, unlikeSanction, createSanction, resetAccount, createUser, refresh: fetchData };
+    return { users, sanctions, accounts, loading, error, currentUser, inquirerId, likeSanction, unlikeSanction, createSanction, resetAccount, createUser, deleteUser, refresh: fetchData };
 }
