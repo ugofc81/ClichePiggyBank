@@ -16,7 +16,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/sanctions")
-@CrossOrigin(origins = "http://localhost:5173") // Allow your frontend port
+@CrossOrigin(origins = "http://localhost:5173")
 public class SanctionController {
     private final SanctionStorageService sanctionStorageService;
     private final UserStorageService userStorageService;
