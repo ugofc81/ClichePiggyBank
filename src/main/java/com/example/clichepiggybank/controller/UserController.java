@@ -14,7 +14,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "http://localhost:5173") // Allow your frontend port
+@CrossOrigin(origins = "http://localhost:5173")
 public class UserController {
     private final UserStorageService userStorageService;
     private final AccountStorageService accountStorageService;
