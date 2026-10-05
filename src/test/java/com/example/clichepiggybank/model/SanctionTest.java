@@ -95,11 +95,8 @@ class SanctionTest {
                 "    \"likes\": 0\n" +
                 "  }";
 
-        // Act - Turn the JSON string back into a Java Sanction object
         Sanction sanctionResult = objectMapper.readValue(inputJson, Sanction.class);
-        String[] roles = {"sanction"};
 
-        // Assert
         assertThat(sanctionResult).isNotNull();
         assertThat(sanctionResult.getId().toString()).isEqualTo("7b485c91-95af-4153-b51a-6b4310a368e0");
         assertThat(sanctionResult.getReporter().getId().toString()).isEqualTo("27ee6c9a-ce75-4515-a4a8-27e755efe0e2");

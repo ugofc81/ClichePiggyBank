@@ -70,7 +70,6 @@ public class AccountStorageServiceTest {
         HashMap<UUID, Account> testAccounts = new HashMap<>();
         UUID newAccountGuid = UUID.fromString("55c1dc52-fe0d-4447-a53a-5566f60c5113");
         UUID newUserGuid = UUID.fromString("be4523cf-6cba-4747-8989-ce8e21470e34");
-        String[] roles = {"account"};
         testAccounts.put(newAccountGuid, new Account(newAccountGuid, newUserGuid, 0));
 
         storageService.saveAccounts(testAccounts);
