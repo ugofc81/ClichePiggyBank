@@ -34,11 +34,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<Map<String, Object>> handleForbidden(ForbiddenException ex) {
         Map<String, Object> body = Map.of(
-                "status", HttpStatus.NOT_FOUND.value(),
-                "error", "Not Found",
+                "status", HttpStatus.FORBIDDEN.value(),
+                "error", "Forbidden",
                 "message", ex.getMessage()
         );
-        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(InquirerNotFoundException.class)
@@ -64,10 +64,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccountNotEmptyException.class)
     public ResponseEntity<Map<String, Object>> handleAccountNotEmpty(AccountNotEmptyException ex) {
         Map<String, Object> body = Map.of(
-                "status", HttpStatus.NOT_FOUND.value(),
+                "status", HttpStatus.FORBIDDEN.value(),
                 "error", "Not Found",
                 "message", ex.getMessage()
         );
-        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
     }
 }

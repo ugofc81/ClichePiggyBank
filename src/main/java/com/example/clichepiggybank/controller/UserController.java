@@ -40,7 +40,7 @@ public class UserController {
         }
         UUID guid = UUID.randomUUID();
         while(current.containsKey(guid)) {
-            guid = UUID.randomUUID();
+            guid = UUID.randomUUID(); // probability this line is executed: ca <current.size> in 5.3 × 10³⁶
         }
         newUser.setId(guid);
         current.put(guid, newUser);
