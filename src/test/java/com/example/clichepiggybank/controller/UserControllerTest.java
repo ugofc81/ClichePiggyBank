@@ -36,7 +36,7 @@ public class UserControllerTest {
     @MockitoBean
     private AccountStorageService accountStorageService;
 
-    private static User produceUser(final String guid, final String name, final String role) {
+    public static User produceUser(final String guid, final String name, final String role) {
         UUID newGuid = UUID.fromString(guid);
         String[] roles = {role};
         return new User(newGuid, name, roles);
@@ -82,11 +82,9 @@ public class UserControllerTest {
         HashMap<UUID, User> userMap = new HashMap<>();
         userMap.put(admin.getId(), admin);
         userMap.put(user.getId(), user);
-        String accountGuidString = "c46b72b7-0382-4a73-b92e-be7580029e56";
-        UUID newAccountGuid = UUID.fromString(accountGuidString);
-        Account account = new Account(newAccountGuid, user.getId(), 0);
+        Account account =  AccountControllerTest.produceAccount("c46b72b7-0382-4a73-b92e-be7580029e56", user.getId().toString(), 0);
         HashMap<UUID, Account> accountMap = new HashMap<>();
-        accountMap.put(newAccountGuid, account);
+        accountMap.put(account.getId(), account);
         Mockito.when(userStorageService.loadUsers()).thenReturn(userMap);
         Mockito.when(accountStorageService.loadAccounts()).thenReturn(accountMap);
 
@@ -163,11 +161,9 @@ public class UserControllerTest {
         userMap.put(notAdmin.getId(), notAdmin);
         userMap.put(user.getId(), user);
         Mockito.when(userStorageService.loadUsers()).thenReturn(userMap);
-        String accountGuidString = "c46b72b7-0382-4a73-b92e-be7580029e56";
-        UUID newAccountGuid = UUID.fromString(accountGuidString);
-        Account account = new Account(newAccountGuid, user.getId(), 5);
+        Account account = AccountControllerTest.produceAccount("c46b72b7-0382-4a73-b92e-be7580029e56", user.getId().toString(), 5);
         HashMap<UUID, Account> accountMap = new HashMap<>();
-        accountMap.put(newAccountGuid, account);
+        accountMap.put(account.getId(), account);
         Mockito.when(accountStorageService.loadAccounts()).thenReturn(accountMap);
 
         mockMvc.perform(delete("/api/users/{id}", user.getId().toString())
