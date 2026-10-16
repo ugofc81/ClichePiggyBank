@@ -42,9 +42,6 @@ class SanctionControllerTest {
     @MockitoBean
     private AccountStorageService accountStorageService;
 
-    // Inner class or helper mimicking a custom amount record/class if used in your model
-    public static record SanctionAmount(double amount) {}
-
     @Test
     void shouldCreateSanctionAndIndirectlyCreateAndChargeAccount() throws Exception {
         String inquirerId = "990b0301-9262-4048-a4d6-4f7ad19eeb46";
@@ -58,12 +55,10 @@ class SanctionControllerTest {
         mockUserMap.put(UUID.fromString(inquirerId), reporter);
         mockUserMap.put(UUID.fromString(receiverId), receiver);
 
-        // 3. Stub the storage layers
         Mockito.when(userStorageService.loadUsers()).thenReturn(mockUserMap);
         Mockito.when(accountStorageService.loadAccounts()).thenReturn(new HashMap<>()); // Triggers account creation branch!
         Mockito.when(sanctionStorageService.loadSanctions()).thenReturn(new HashMap<>());
 
-        // 4. Formulate the input body Sanction
         Sanction incomingSanction = new Sanction(
                 sanctionId,
                 reporter,
@@ -75,9 +70,8 @@ class SanctionControllerTest {
                 0
                 );
 
-        // Act & Assert
         mockMvc.perform(post("/api/sanctions")
-                        .param("inquirerid", inquirerId.toString())
+                        .param("inquirerid", inquirerId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(incomingSanction)))
                 .andDo(print())
