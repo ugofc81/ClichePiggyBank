@@ -125,7 +125,7 @@ class AccountControllerTest {
 
         // Act & Assert
         mockMvc.perform(put("/api/accounts/" + accountId + "/reset")
-                        .param("inquirerid", regularUserId.toString()))
+                        .param("inquirerid", regularUserId))
                 .andExpect(status().isForbidden());
     }
 }

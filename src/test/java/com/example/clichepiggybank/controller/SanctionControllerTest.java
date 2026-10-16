@@ -1,8 +1,6 @@
 package com.example.clichepiggybank.controller;
 
-import com.example.clichepiggybank.model.Account;
 import com.example.clichepiggybank.model.Sanction;
-import com.example.clichepiggybank.model.SanctionAmount;
 import com.example.clichepiggybank.model.User;
 import com.example.clichepiggybank.service.AccountStorageService;
 import com.example.clichepiggybank.service.SanctionStorageService;
@@ -10,7 +8,6 @@ import com.example.clichepiggybank.service.UserStorageService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
