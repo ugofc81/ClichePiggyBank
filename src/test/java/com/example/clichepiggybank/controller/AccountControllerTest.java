@@ -1,6 +1,7 @@
 package com.example.clichepiggybank.controller;
 
 import com.example.clichepiggybank.model.Account;
+import com.example.clichepiggybank.model.User;
 import com.example.clichepiggybank.service.AccountStorageService;
 import com.example.clichepiggybank.service.UserStorageService;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -50,5 +52,80 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$..id").value(account.getId().toString()))
                 .andExpect(jsonPath("$..ownerId").value(account.getOwnerId().toString()))
                 .andExpect(jsonPath("$..balance").value(account.getBalance()));
+    }
+
+    @Test
+    void shouldReturnAccountById() throws Exception {
+        // Arrange
+        UUID accountId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        Account account = new Account(accountId, ownerId, 100.50);
+
+        HashMap<UUID, Account> map = new HashMap<>();
+        map.put(accountId, account);
+
+        Mockito.when(accountStorageService.loadAccounts()).thenReturn(map);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/accounts/" + accountId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(accountId.toString()))
+                .andExpect(jsonPath("$.balance").value(100.50));
+    }
+
+    @Test
+    void shouldReturn404WhenAccountDoesNotExist() throws Exception {
+        // Arrange
+        UUID missingAccountId = UUID.randomUUID();
+        Mockito.when(accountStorageService.loadAccounts()).thenReturn(new HashMap<>());
+
+        // Act & Assert
+        mockMvc.perform(get("/api/accounts/" + missingAccountId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldResetAccountWhenInquirerIsAdmin() throws Exception {
+        // Arrange
+        UUID accountId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        UUID adminId = UUID.randomUUID();
+        Account account = new Account(accountId, ownerId, 500.0);
+
+        HashMap<UUID, Account> accountMap = new HashMap<>();
+        accountMap.put(accountId, account);
+
+        HashMap<UUID, User> userMap = new HashMap<>();
+        // Assuming your User object can handle an admin setup or your UserController mock checks this
+        User adminUser = new User(adminId, "admin_user", new String[]{"admin"});
+        userMap.put(adminId, adminUser);
+
+        Mockito.when(accountStorageService.loadAccounts()).thenReturn(accountMap);
+        Mockito.when(userStorageService.loadUsers()).thenReturn(userMap);
+
+        // Act & Assert
+        mockMvc.perform(put("/api/accounts/"+ accountId + "/reset")
+                        .param("inquirerid", adminId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(accountId.toString()))
+                .andExpect(jsonPath("$.balance").value(0));
+    }
+
+
+    @Test
+    void shouldReturn403WhenInquirerIsNotAdmin() throws Exception {
+        String regularUserId = "55c1dc52-fe0d-4447-a53a-5566f60c5113";
+        String accountId = "c46b72b7-0382-4a73-b92e-be7580029e56";
+
+        HashMap<UUID, User> userMap = new HashMap<>();
+        User regularUser = UserControllerTest.produceUser(regularUserId, "alice", "user");
+        userMap.put(UUID.fromString(regularUserId), regularUser);
+
+        Mockito.when(userStorageService.loadUsers()).thenReturn(userMap);
+
+        // Act & Assert
+        mockMvc.perform(put("/api/accounts/" + accountId + "/reset")
+                        .param("inquirerid", regularUserId))
+                .andExpect(status().isForbidden());
     }
 }
