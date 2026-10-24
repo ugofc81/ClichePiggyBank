@@ -1,6 +1,7 @@
 package com.example.clichepiggybank.controller;
 
 import com.example.clichepiggybank.model.Sanction;
+import com.example.clichepiggybank.model.SanctionAmount;
 import com.example.clichepiggybank.model.User;
 import com.example.clichepiggybank.service.AccountStorageService;
 import com.example.clichepiggybank.service.SanctionStorageService;
@@ -16,10 +17,18 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -83,5 +92,241 @@ class SanctionControllerTest {
         // 5. Verification: Check that AccountController logic successfully instructed account data to be saved!
         Mockito.verify(accountStorageService, Mockito.atLeastOnce()).saveAccounts(any(HashMap.class));
         Mockito.verify(sanctionStorageService, Mockito.times(1)).saveSanctions(any(HashMap.class));
+    }
+
+    @Test
+    void shouldGetSanctionById() throws Exception {
+        UUID sanctionId = UUID.randomUUID();
+        User reporter = UserControllerTest.produceUser("990b0301-9262-4048-a4d6-4f7ad19eeb46", "alice", "user");
+        User receiver = UserControllerTest.produceUser("c0a6d648-d769-4ebb-a0f0-7d44a0b0462e", "bob", "user");
+        Sanction sanction = new Sanction(
+                sanctionId,
+                reporter,
+                receiver,
+                SanctionAmount.STANDARD,
+                "late payment",
+                new Date(),
+                Collections.emptySet(),
+                0
+        );
+
+        HashMap<UUID, Sanction> sanctions = new HashMap<>();
+        sanctions.put(sanctionId, sanction);
+        Mockito.when(sanctionStorageService.loadSanctions()).thenReturn(sanctions);
+
+        mockMvc.perform(get("/api/sanctions/{id}", sanctionId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(sanctionId.toString()))
+                .andExpect(jsonPath("$.receiver.name").value("bob"));
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenSanctionDoesNotExist() throws Exception {
+        UUID missingId = UUID.randomUUID();
+        Mockito.when(sanctionStorageService.loadSanctions()).thenReturn(new HashMap<>());
+
+        mockMvc.perform(get("/api/sanctions/{id}", missingId))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Sanction with id '" + missingId + "' was not found."));
+    }
+
+    @Test
+    void shouldGetAllSanctions() throws Exception {
+        User inquirer = configureInquirer();
+        Sanction firstSanction = produceSanction(UUID.randomUUID(), 1L, 2);
+        Sanction secondSanction = produceSanction(UUID.randomUUID(), 2L, 5);
+        HashMap<UUID, Sanction> sanctions = new HashMap<>();
+        sanctions.put(firstSanction.getId(), firstSanction);
+        sanctions.put(secondSanction.getId(), secondSanction);
+        Mockito.when(sanctionStorageService.loadSanctions()).thenReturn(sanctions);
+
+        mockMvc.perform(get("/api/sanctions").param("inquirerid", inquirer.getId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[*].id", containsInAnyOrder(
+                        firstSanction.getId().toString(),
+                        secondSanction.getId().toString()
+                )));
+    }
+
+    @Test
+    void shouldGetLastTenSanctionsInDescendingDateOrder() throws Exception {
+        User inquirer = configureInquirer();
+        HashMap<UUID, Sanction> sanctions = new HashMap<>();
+        List<String> expectedIds = new ArrayList<>();
+        for (int index = 0; index < 12; index++) {
+            Sanction sanction = produceSanction(UUID.randomUUID(), index, index);
+            sanctions.put(sanction.getId(), sanction);
+            if (index >= 2) {
+                expectedIds.add(0, sanction.getId().toString());
+            }
+        }
+        Mockito.when(sanctionStorageService.loadSanctions()).thenReturn(sanctions);
+
+        mockMvc.perform(get("/api/sanctions/latest").param("inquirerid", inquirer.getId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(10)))
+                .andExpect(jsonPath("$[*].id", contains(expectedIds.toArray())));
+    }
+
+    @Test
+    void shouldPaginateSanctionsInRequestedSortOrder() throws Exception {
+        User inquirer = configureInquirer();
+        Sanction oldest = produceSanction(UUID.randomUUID(), 1L, 30);
+        Sanction secondOldest = produceSanction(UUID.randomUUID(), 2L, 10);
+        Sanction secondNewest = produceSanction(UUID.randomUUID(), 3L, 40);
+        Sanction newest = produceSanction(UUID.randomUUID(), 4L, 20);
+        HashMap<UUID, Sanction> sanctions = new HashMap<>();
+        for (Sanction sanction : List.of(oldest, secondOldest, secondNewest, newest)) {
+            sanctions.put(sanction.getId(), sanction);
+        }
+        Mockito.when(sanctionStorageService.loadSanctions()).thenReturn(sanctions);
+
+        mockMvc.perform(get("/api/sanctions/paginated")
+                        .param("inquirerid", inquirer.getId().toString())
+                        .param("sort", "datetime")
+                        .param("order", "asc")
+                        .param("size", "2")
+                        .param("page", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[*].id", contains(
+                        secondNewest.getId().toString(),
+                        newest.getId().toString()
+                )));
+
+        mockMvc.perform(get("/api/sanctions/paginated")
+                        .param("inquirerid", inquirer.getId().toString())
+                        .param("sort", "likes")
+                        .param("order", "asc")
+                        .param("size", "4")
+                        .param("page", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].id", contains(
+                        secondOldest.getId().toString(),
+                        newest.getId().toString(),
+                        oldest.getId().toString(),
+                        secondNewest.getId().toString()
+                )));
+    }
+
+    @Test
+    void shouldUseDefaultPaginationAndSortByNewestFirst() throws Exception {
+        User inquirer = configureInquirer();
+        HashMap<UUID, Sanction> sanctions = new HashMap<>();
+        List<String> expectedIds = new ArrayList<>();
+        for (int index = 0; index < 12; index++) {
+            Sanction sanction = produceSanction(UUID.randomUUID(), index, index);
+            sanctions.put(sanction.getId(), sanction);
+            if (index >= 2) {
+                expectedIds.add(0, sanction.getId().toString());
+            }
+        }
+        Mockito.when(sanctionStorageService.loadSanctions()).thenReturn(sanctions);
+
+        mockMvc.perform(get("/api/sanctions/paginated")
+                        .param("inquirerid", inquirer.getId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(10)))
+                .andExpect(jsonPath("$[*].id", contains(expectedIds.toArray())));
+    }
+
+    @Test
+    void shouldGetBestSanctionsInDescendingLikesOrder() throws Exception {
+        User inquirer = configureInquirer();
+        Sanction leastLiked = produceSanction(UUID.randomUUID(), 1L, 1);
+        Sanction mostLiked = produceSanction(UUID.randomUUID(), 2L, 9);
+        Sanction middleLiked = produceSanction(UUID.randomUUID(), 3L, 4);
+        HashMap<UUID, Sanction> sanctions = new HashMap<>();
+        sanctions.put(leastLiked.getId(), leastLiked);
+        sanctions.put(mostLiked.getId(), mostLiked);
+        sanctions.put(middleLiked.getId(), middleLiked);
+        Mockito.when(sanctionStorageService.loadSanctions()).thenReturn(sanctions);
+
+        mockMvc.perform(get("/api/sanctions/best").param("inquirerid", inquirer.getId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].id", contains(
+                        mostLiked.getId().toString(),
+                        middleLiked.getId().toString(),
+                        leastLiked.getId().toString()
+                )));
+    }
+
+    @Test
+    void shouldLikeSanctionAndSaveUpdatedLikes() throws Exception {
+        User inquirer = configureInquirer();
+        UUID otherUserId = UUID.randomUUID();
+        Sanction sanction = produceSanction(UUID.randomUUID(), 1L, 1);
+        sanction.setLikedBy(new HashSet<>(Collections.singleton(otherUserId)));
+        HashMap<UUID, Sanction> sanctions = new HashMap<>();
+        sanctions.put(sanction.getId(), sanction);
+        Mockito.when(sanctionStorageService.loadSanctions()).thenReturn(sanctions);
+
+        mockMvc.perform(put("/api/sanctions/{id}/like", sanction.getId())
+                        .param("inquirerid", inquirer.getId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.likes").value(2))
+                .andExpect(jsonPath("$.likedBy", containsInAnyOrder(
+                        inquirer.getId().toString(),
+                        otherUserId.toString()
+                )));
+
+        Mockito.verify(sanctionStorageService).saveSanctions(sanctions);
+    }
+
+    @Test
+    void shouldUnlikeSanctionAndSaveUpdatedLikes() throws Exception {
+        User inquirer = configureInquirer();
+        UUID otherUserId = UUID.randomUUID();
+        Sanction sanction = produceSanction(UUID.randomUUID(), 1L, 2);
+        sanction.setLikedBy(new HashSet<>(List.of(inquirer.getId(), otherUserId)));
+        HashMap<UUID, Sanction> sanctions = new HashMap<>();
+        sanctions.put(sanction.getId(), sanction);
+        Mockito.when(sanctionStorageService.loadSanctions()).thenReturn(sanctions);
+
+        mockMvc.perform(put("/api/sanctions/{id}/unlike", sanction.getId())
+                        .param("inquirerid", inquirer.getId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.likes").value(1))
+                .andExpect(jsonPath("$.likedBy", contains(otherUserId.toString())));
+
+        Mockito.verify(sanctionStorageService).saveSanctions(sanctions);
+    }
+
+    private User configureInquirer() {
+        User inquirer = UserControllerTest.produceUser(
+                "990b0301-9262-4048-a4d6-4f7ad19eeb46",
+                "alice",
+                "user"
+        );
+        HashMap<UUID, User> users = new HashMap<>();
+        users.put(inquirer.getId(), inquirer);
+        Mockito.when(userStorageService.loadUsers()).thenReturn(users);
+        return inquirer;
+    }
+
+    private Sanction produceSanction(UUID id, long datetime, int likes) {
+        User reporter = UserControllerTest.produceUser(
+                "990b0301-9262-4048-a4d6-4f7ad19eeb46",
+                "alice",
+                "user"
+        );
+        User receiver = UserControllerTest.produceUser(
+                "c0a6d648-d769-4ebb-a0f0-7d44a0b0462e",
+                "bob",
+                "user"
+        );
+        return new Sanction(
+                id,
+                reporter,
+                receiver,
+                SanctionAmount.STANDARD,
+                "late payment",
+                new Date(datetime),
+                Collections.emptySet(),
+                likes
+        );
     }
 }

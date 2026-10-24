@@ -138,6 +138,7 @@ public class SanctionController {
         return ResponseEntity.ok(newSanction);
     }
 
+    @GetMapping("/{id}")
     public ResponseEntity<Sanction> getSanction(@PathVariable UUID id) {
         HashMap<UUID, Sanction> sanctions = sanctionStorageService.loadSanctions();
         if(!sanctions.containsKey(id)) {
