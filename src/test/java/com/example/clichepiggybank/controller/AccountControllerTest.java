@@ -111,6 +111,23 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.balance").value(0));
     }
 
+    @Test
+    void shouldReturn404WhenResettingAccountThatDoesNotExist() throws Exception {
+        UUID missingAccountId = UUID.randomUUID();
+        UUID adminId = UUID.randomUUID();
+        HashMap<UUID, User> userMap = new HashMap<>();
+        userMap.put(adminId, new User(adminId, "admin_user", new String[]{"admin"}));
+
+        Mockito.when(accountStorageService.loadAccounts()).thenReturn(new HashMap<>());
+        Mockito.when(userStorageService.loadUsers()).thenReturn(userMap);
+
+        mockMvc.perform(put("/api/accounts/" + missingAccountId + "/reset")
+                        .param("inquirerid", adminId.toString()))
+                .andExpect(status().isNotFound());
+
+        Mockito.verify(accountStorageService, Mockito.never()).saveAccounts(Mockito.any());
+    }
+
 
     @Test
     void shouldReturn403WhenInquirerIsNotAdmin() throws Exception {
