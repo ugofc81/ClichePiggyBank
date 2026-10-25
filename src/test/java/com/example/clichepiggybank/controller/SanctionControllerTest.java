@@ -152,6 +152,17 @@ class SanctionControllerTest {
     }
 
     @Test
+    void shouldReturnNotFoundWhenInquirerDoesNotExist() throws Exception {
+        UUID missingInquirerId = UUID.randomUUID();
+        Mockito.when(userStorageService.loadUsers()).thenReturn(new HashMap<>());
+
+        mockMvc.perform(get("/api/sanctions").param("inquirerid", missingInquirerId.toString()))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Inquirer with id '" + missingInquirerId + "' was not found."));
+    }
+
+    @Test
     void shouldGetLastTenSanctionsInDescendingDateOrder() throws Exception {
         User inquirer = configureInquirer();
         HashMap<UUID, Sanction> sanctions = new HashMap<>();
@@ -277,6 +288,19 @@ class SanctionControllerTest {
     }
 
     @Test
+    void shouldReturnNotFoundWhenLikingSanctionDoesNotExist() throws Exception {
+        User inquirer = configureInquirer();
+        UUID missingId = UUID.randomUUID();
+        Mockito.when(sanctionStorageService.loadSanctions()).thenReturn(new HashMap<>());
+
+        mockMvc.perform(put("/api/sanctions/{id}/like", missingId)
+                        .param("inquirerid", inquirer.getId().toString()))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Sanction with id '" + missingId + "' was not found."));
+    }
+
+    @Test
     void shouldUnlikeSanctionAndSaveUpdatedLikes() throws Exception {
         User inquirer = configureInquirer();
         UUID otherUserId = UUID.randomUUID();
@@ -293,6 +317,19 @@ class SanctionControllerTest {
                 .andExpect(jsonPath("$.likedBy", contains(otherUserId.toString())));
 
         Mockito.verify(sanctionStorageService).saveSanctions(sanctions);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenUnlikingSanctionDoesNotExist() throws Exception {
+        User inquirer = configureInquirer();
+        UUID missingId = UUID.randomUUID();
+        Mockito.when(sanctionStorageService.loadSanctions()).thenReturn(new HashMap<>());
+
+        mockMvc.perform(put("/api/sanctions/{id}/unlike", missingId)
+                        .param("inquirerid", inquirer.getId().toString()))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Sanction with id '" + missingId + "' was not found."));
     }
 
     private User configureInquirer() {
