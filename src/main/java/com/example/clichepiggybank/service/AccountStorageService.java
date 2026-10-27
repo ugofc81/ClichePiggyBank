@@ -1,64 +1,43 @@
 package com.example.clichepiggybank.service;
 
 import com.example.clichepiggybank.model.Account;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import tools.jackson.core.JacksonException;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.ObjectMapper;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.UUID;
 
 @Service
 public class AccountStorageService {
+    private final JdbcTemplate jdbcTemplate;
 
-    @Value("${storage.account-file}")
-    private String filePath;
-
-    @Value("${storage.account-temp-file}")
-    private String tempFilePath;
-
-    private final ObjectMapper objectMapper;
-
-    public AccountStorageService(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+    public AccountStorageService(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     public synchronized HashMap<UUID, Account> loadAccounts() {
-        File file = new File(filePath);
-        if (!file.exists()) {
-            return new HashMap<>();
-        }
-        try {
-            return objectMapper.readValue(file, new TypeReference<HashMap<UUID, Account>>() {});
-        } catch (JacksonException e) {
-            System.err.println("error reading account data file" + e.getMessage());
-            return new HashMap<>();
-        }
+        HashMap<UUID, Account> accounts = new HashMap<>();
+        jdbcTemplate.query(
+                "SELECT id, owner_id, balance FROM accounts",
+                (resultSet, rowNum) -> new Account(
+                        resultSet.getObject("id", UUID.class),
+                        resultSet.getObject("owner_id", UUID.class),
+                        resultSet.getBigDecimal("balance").doubleValue()
+                )
+        ).forEach(account -> accounts.put(account.getId(), account));
+        return accounts;
     }
 
+    @Transactional
     public synchronized void saveAccounts(HashMap<UUID, Account> accountsMap) {
-        File tempFile = new File(tempFilePath);
-        File finalFile = new File(filePath);
-
-        try {
-            objectMapper.writeValue(tempFile, accountsMap);
-            Files.move(
-                    tempFile.toPath(),
-                    finalFile.toPath(),
-                    StandardCopyOption.REPLACE_EXISTING,
-                    StandardCopyOption.ATOMIC_MOVE
-            );
-        } catch (IOException e) {
-            System.err.println("error saving account data file" + e.getMessage());
-            if (tempFile.exists()) {
-                tempFile.delete();
-            }
-        }
+        jdbcTemplate.update("DELETE FROM accounts");
+        accountsMap.values().forEach(account -> jdbcTemplate.update(
+                "INSERT INTO accounts (id, owner_id, balance) VALUES (?, ?, ?)",
+                account.getId(),
+                account.getOwnerId(),
+                BigDecimal.valueOf(account.getBalance())
+        ));
     }
 }

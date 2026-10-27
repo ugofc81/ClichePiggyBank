@@ -4,14 +4,38 @@ name: cliche-piggy-bank
 services:
   # 1. Your Containerized Spring Boot App
   my-springboot-backend:
-    build: .                 # Tells Docker to look for the Dockerfile in the current directory
+    build: .
     ports:
-      - "9092:9092"          # Keeps port 9092 accessible from your Linux machine
+      - "9092:9092"
+    environment:
+      DATABASE_URL: jdbc:postgresql://database:5432/clichepiggybank
+      DATABASE_USER: ${POSTGRES_USER:-piggybank}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-piggybank}
+      LEGACY_USERS_FILE: /app/legacy/users.json
+      LEGACY_ACCOUNTS_FILE: /app/legacy/accounts.json
+      LEGACY_SANCTIONS_FILE: /app/legacy/sanctions.json
     volumes:
-      - ./users.json:/app/users.json
-      - ./accounts.json:/app/accounts.json
-      - ./sanctions.json:/app/sanctions.json
+      - ./users.json:/app/legacy/users.json:ro
+      - ./accounts.json:/app/legacy/accounts.json:ro
+      - ./sanctions.json:/app/legacy/sanctions.json:ro
     restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+
+  database:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: clichepiggybank
+      POSTGRES_USER: ${POSTGRES_USER:-piggybank}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-piggybank}
+    volumes:
+      - piggybank_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-piggybank} -d clichepiggybank"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   # 2. Local Budibase Platform
   budibase:
@@ -24,3 +48,6 @@ services:
     restart: unless-stopped
     depends_on:
       - my-springboot-backend
+
+volumes:
+  piggybank_data:

@@ -6,6 +6,16 @@ I continued to develop it in order to learn new skills and experiment.
 ## Backend
 Springboot application. The basic skeleton was built on the following requirements:
 
+The backend stores users, accounts, sanctions, and sanction likes in PostgreSQL. To run
+the backend and database together, use `docker compose up --build`; the API remains
+available at `http://localhost:9092`. PostgreSQL data is kept in the `piggybank_data`
+Docker volume. Set `POSTGRES_USER` and `POSTGRES_PASSWORD` in the environment before
+starting the stack to override the local-development defaults.
+
+On the first startup against an empty database, the backend imports the legacy
+`users.json`, `accounts.json`, and `sanctions.json` files once. These files are not
+used for ongoing storage. Existing non-empty databases are left untouched.
+
 ### Digital Cliche Piggy Bank
 
 #### Objective:

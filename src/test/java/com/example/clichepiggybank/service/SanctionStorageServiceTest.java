@@ -3,113 +3,63 @@ package com.example.clichepiggybank.service;
 import com.example.clichepiggybank.model.Sanction;
 import com.example.clichepiggybank.model.SanctionAmount;
 import com.example.clichepiggybank.model.User;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
-import tools.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.print.attribute.SetOfIntegerSyntax;
-import java.io.File;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class SanctionStorageServiceTest {
+@SpringBootTest
+class SanctionStorageServiceTest {
+    @Autowired
     private SanctionStorageService storageService;
 
-    private final String TEST_FILE = "users-test.json";
-    private final String TEST_TEMP_FILE = "users-test.json.tmp";
-
     @BeforeEach
-    void setUp() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        storageService = new SanctionStorageService(objectMapper);
-
-        ReflectionTestUtils.setField(storageService, "filePath", TEST_FILE);
-        ReflectionTestUtils.setField(storageService, "tempFilePath", TEST_TEMP_FILE);
-
-        cleanUpTestFiles();
-    }
-
-    @AfterEach
-    void tearDown() {
-        cleanUpTestFiles();
+    void clearDatabase() {
+        storageService.saveSanctions(new HashMap<>());
     }
 
     @Test
-    void shouldReturnEmptyListWhenFileDoesNotExist() {
-        HashMap<UUID, Sanction> users = storageService.loadSanctions();
-
-        assertThat(users).isNotNull().isEmpty();
-    }
-
-    private void cleanUpTestFiles() {
-        new File(TEST_FILE).delete();
-        new File(TEST_TEMP_FILE).delete();
+    void shouldReturnEmptyMapWhenDatabaseHasNoSanctions() {
+        assertThat(storageService.loadSanctions()).isEmpty();
     }
 
     @Test
-    void shouldSaveAndLoadSanctionsSuccessfully() {
-        HashMap<UUID, Sanction> testSanctions = new HashMap<>();
-        UUID newSanctionGuid = UUID.fromString("55c1dc52-fe0d-4447-a53a-5566f60c5113");
-        UUID newReporterGuid = UUID.fromString("be4523cf-6cba-4747-8989-ce8e21470e34");
-        UUID newReceiverGuid = UUID.fromString("f6774142-8b20-45fd-bd62-c1dab2a678f6");
-        Date now = new Date();
-        String[] roles = {"roles"};
-        String reason = "Sample reason";
-        Set<UUID> emptySet = Collections.emptySet();
-        Sanction newSanction = new Sanction(
-                newSanctionGuid,
-                new User(newReporterGuid, "ReporterName", roles),
-                new User(newReceiverGuid, "SanctionedName", roles),
+    void shouldSaveAndLoadSanctionDetailsAndLikes() {
+        UUID id = UUID.randomUUID();
+        UUID reporterId = UUID.randomUUID();
+        UUID receiverId = UUID.randomUUID();
+        UUID likerId = UUID.randomUUID();
+        Date createdAt = new Date(1_800_000_000_000L);
+        Sanction sanction = new Sanction(
+                id,
+                new User(reporterId, "Reporter", new String[]{"user"}),
+                new User(receiverId, "Receiver", new String[]{"user"}),
                 SanctionAmount.HIGH,
-                reason,
-                now,
-                emptySet,
-                0
-                );
-        testSanctions.put(newSanctionGuid, newSanction);
-
-        storageService.saveSanctions(testSanctions);
-        HashMap<UUID, Sanction> loadedSanctions = storageService.loadSanctions();
-
-        assertThat(loadedSanctions).hasSize(1);
-        assertThat(loadedSanctions.get(newSanctionGuid).getId()).isEqualTo(newSanctionGuid);
-        assertThat(loadedSanctions.get(newSanctionGuid).getReporter().getId()).isEqualTo(newReporterGuid);
-        assertThat(loadedSanctions.get(newSanctionGuid).getReceiver().getId()).isEqualTo(newReceiverGuid);
-        assertThat(loadedSanctions.get(newSanctionGuid).getDatetime()).isEqualTo(now);
-        assertThat(loadedSanctions.get(newSanctionGuid).getReason()).isEqualTo(reason);
-    }
-
-    @Test
-    void shouldAtomicSwapDeleteOldFileLayout() {
-        HashMap<UUID, Sanction> testSanctions = new HashMap<>();
-        UUID newSanctionGuid = UUID.fromString("55c1dc52-fe0d-4447-a53a-5566f60c5113");
-        UUID newReporterGuid = UUID.fromString("be4523cf-6cba-4747-8989-ce8e21470e34");
-        UUID newReceiverGuid = UUID.fromString("f6774142-8b20-45fd-bd62-c1dab2a678f6");
-        Date now = new Date();
-        String[] roles = {"roles"};
-        String reason = "Sample reason";
-        Set<UUID> emptySet = Collections.emptySet();
-        Sanction newSanction = new Sanction(
-                newSanctionGuid,
-                new User(newReporterGuid, "ReporterName", roles),
-                new User(newReceiverGuid, "SanctionedName", roles),
-                SanctionAmount.HIGH,
-                reason,
-                now,
-                emptySet,
-                0
+                "Sample reason",
+                createdAt,
+                Set.of(likerId),
+                1
         );
-        testSanctions.put(newSanctionGuid, newSanction);
+        HashMap<UUID, Sanction> sanctions = new HashMap<>();
+        sanctions.put(id, sanction);
 
-        storageService.saveSanctions(testSanctions);
+        storageService.saveSanctions(sanctions);
 
-        File mainFile = new File(TEST_FILE);
-        File tempFile = new File(TEST_TEMP_FILE);
-
-        assertThat(mainFile).exists(); // The final file must exist
-        assertThat(tempFile).doesNotExist(); // The temporary file must have been swapped and cleaned up
+        Sanction loaded = storageService.loadSanctions().get(id);
+        assertThat(loaded.getReporter().getId()).isEqualTo(reporterId);
+        assertThat(loaded.getReporter().getRoles()).containsExactly("user");
+        assertThat(loaded.getReceiver().getName()).isEqualTo("Receiver");
+        assertThat(loaded.getAmount()).isEqualTo(SanctionAmount.HIGH);
+        assertThat(loaded.getReason()).isEqualTo("Sample reason");
+        assertThat(loaded.getDatetime()).isEqualTo(createdAt);
+        assertThat(loaded.getLikedBy()).containsExactly(likerId);
+        assertThat(loaded.getLikes()).isEqualTo(1);
     }
 }
